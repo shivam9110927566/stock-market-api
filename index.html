@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market API Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 450px;
+        }
+        h2 {
+            text-align: center;
+            color: #38bdf8;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #334155;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input {
+            background: #1e293b;
+            color: white;
+            border: 1px solid #475569;
+        }
+        button {
+            background-color: #0ea5e9;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #0284c7;
+        }
+        .result {
+            margin-top: 10px;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            word-break: break-all;
+            font-size: 14px;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📈 Stock Market API</h2>
+
+    <!-- Feature 1: Generate API Key -->
+    <div class="card">
+        <h3>🔑 Generate API Key</h3>
+        <input type="text" id="username" placeholder="Apna Naam Daalein (e.g. Shivam)">
+        <button onclick="generateKey()">Key Banayein</button>
+        <div id="keyResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Feature 2: Check Stock Price -->
+    <div class="card">
+        <h3>📊 Check Live Stock Price</h3>
+        <input type="text" id="ticker" placeholder="Ticker (e.g. RELIANCE.NS)">
+        <button onclick="getStockPrice()">Price Dekhein</button>
+        <div id="stockResult" class="result" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = "https://stock-market-api-6v6g.onrender.com";
+
+    async function generateKey() {
+        const username = document.getElementById("username").value;
+        const resultDiv = document.getElementById("keyResult");
+
+        if (!username) {
+            alert("Pehle naam toh daalo bhai!");
+            return;
+        }
+
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML = "Generating key...";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/generate-key?username=${username}`, {
+                method: "POST"
+            });
+            const data = await response.json();
+            resultDiv.innerHTML = `User: ${data.user}<br>Key: ${data.api_key}`;
+        } catch (error) {
+            resultDiv.innerHTML = "Error aa gaya: " + error;
+        }
+    }
+
+    async function getStockPrice() {
+        const ticker = document.getElementById("ticker").value.trim();
+        const resultDiv = document.getElementById("stockResult");
+
+        if (!ticker) {
+            alert("Ticker daalna mat bhoolo (e.g. TCS.NS)!");
+            return;
+        }
+
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML = "Fetching live price...";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/stock/${ticker}`);
+            const data = await response.json();
+            
+            if(response.ok) {
+                resultDiv.innerHTML = `Stock: ${data.ticker}<br>Price: ₹${data.current_price} (${data.currency})<br>Market: ${data.market}`;
+            } else {
+                resultDiv.innerHTML = "Error: " + (data.detail || "Data nahi mila");
+            }
+        } catch (error) {
+            resultDiv.innerHTML = "Connection Error: " + error;
+        }
+    }
+</script>
+
+</body>
+</html>
