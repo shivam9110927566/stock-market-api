@@ -1,6 +1,6 @@
 import secrets
 import yfinance as yf
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -46,11 +46,16 @@ def generate_api_key(username: str):
         "status": "Success! Aapki API key ban gayi hai."
     }
 
-# 📈 Indian Stock Market Live Price check karne ka route (yfinance ke sath)
+# 📈 Indian Stock Market Live Price check karne ka route (Secured with API Key)
 @app.get("/stock/{ticker}")
-def get_stock_price(ticker: str):
+def get_stock_price(ticker: str, x_api_key: str = Header(...)):
+    # Aapki generate ki hui valid API key yahan check hogi
+    expected_key = "stock_key_67e3081b4a9127f29752e1d2"
+    
+    if x_api_key != expected_key:
+        raise HTTPException(status_code=401, detail="Unauthorized! Galat ya missing API key hai bhai.")
+    
     try:
-        # India ke stocks ke aage .NS lagta hai (Jaise RELIANCE.NS, TCS.NS, INFY.NS)
         stock = yf.Ticker(ticker)
         data = stock.history(period="1d")
         
