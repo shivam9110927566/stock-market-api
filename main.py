@@ -3,6 +3,7 @@ import yfinance as yf
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from cachetools import cached, TTLCache
 
 # Startup & Shutdown Lifespan Handler
 @asynccontextmanager
@@ -28,6 +29,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 🚀 Cache memory: Ek stock ka price 60 seconds tak save rahega (Rate limit se bachne ke liye)
+stock_cache = TTLCache(maxsize=100, ttl=60)
+
 @app.get("/")
 def root():
     return {
@@ -46,7 +50,16 @@ def generate_api_key(username: str):
         "status": "Success! Aapki API key ban gayi hai."
     }
 
-# 📈 Indian Stock Market Live Price check karne ka route (Smart Secured)
+# Yahoo Finance se data laane ka cached function
+@cached(stock_cache)
+def fetch_stock_data(ticker: str):
+    stock = yf.Ticker(ticker)
+    data = stock.history(period="1d")
+    if data.empty:
+        return None
+    return float(data['Close'].iloc[-1])
+
+# 📈 Indian Stock Market Live Price check karne ka route (Smart Secured + Cached)
 @app.get("/stock/{ticker}")
 def get_stock_price(ticker: str, x_api_key: str = Header(...)):
     # Agar key 'stock_key_' se shuru hoti hai, toh access mil jayega
@@ -54,20 +67,18 @@ def get_stock_price(ticker: str, x_api_key: str = Header(...)):
         raise HTTPException(status_code=401, detail="Unauthorized! Galat API key hai bhai.")
     
     try:
-        stock = yf.Ticker(ticker)
-        data = stock.history(period="1d")
+        clean_ticker = ticker.upper()
+        current_price = fetch_stock_data(clean_ticker)
         
-        if data.empty:
+        if current_price is None:
             raise HTTPException(status_code=404, detail="Stock data nahi mila. Sahi ticker daalein (jaise RELIANCE.NS).")
         
-        current_price = data['Close'].iloc[-1]
-        
         return {
-            "ticker": ticker.upper(),
-            "current_price": round(float(current_price), 2),
+            "ticker": clean_ticker,
+            "current_price": round(current_price, 2),
             "currency": "INR",
             "market": "NSE (India)",
-            "status": "Success"
+            "status": "Success (Cached)"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
