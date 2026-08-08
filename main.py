@@ -46,14 +46,12 @@ def generate_api_key(username: str):
         "status": "Success! Aapki API key ban gayi hai."
     }
 
-# 📈 Indian Stock Market Live Price check karne ka route (Secured with API Key)
+# 📈 Indian Stock Market Live Price check karne ka route (Smart Secured)
 @app.get("/stock/{ticker}")
 def get_stock_price(ticker: str, x_api_key: str = Header(...)):
-    # Aapki generate ki hui valid API key yahan check hogi
-    expected_key = "stock_key_67e3081b4a9127f29752e1d2"
-    
-    if x_api_key != expected_key:
-        raise HTTPException(status_code=401, detail="Unauthorized! Galat ya missing API key hai bhai.")
+    # Agar key 'stock_key_' se shuru hoti hai, toh access mil jayega
+    if not x_api_key.startswith("stock_key_"):
+        raise HTTPException(status_code=401, detail="Unauthorized! Galat API key hai bhai.")
     
     try:
         stock = yf.Ticker(ticker)
