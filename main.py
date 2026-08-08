@@ -1,18 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.api.v1.endpoints import stock_api
-from app.database.session import engine
-from app.models.base import Base
 
-# Modern Lifespan Event Handler (replaces deprecated @app.on_event)
+# Agar aapne database tables auto-create karne hain, toh unhe direct import karenge:
+# (Agar abhi database file ready nahi hai, toh ye lifespan hata bhi sakte hain)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Database tables create karna
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Startup logic
+    print("Application startup...")
     yield
-    # Shutdown logic (agar zaroorat ho)
+    # Shutdown logic
+    print("Application shutdown...")
 
 app = FastAPI(
     title="Stock Market API",
@@ -20,17 +18,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Middleware (Taaki koi bhi frontend app aapki API ko bina error ke call kar sake)
+# CORS Middleware (Taaki frontend se connect ho sake)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Production mein yahan specific domain de sakte hain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# API Router include karein
-app.include_router(stock_api.router, prefix="/api/v1", tags=["Stock API"])
 
 @app.get("/")
 def root():
@@ -38,3 +33,5 @@ def root():
         "status": "online",
         "message": "Welcome to Stock Market API. Visit /docs for documentation."
     }
+
+# Yahan aap apne baaki ke API routes/endpoints seedha likh sakte hain
