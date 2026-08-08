@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+cachetools
 sqlalchemy
 yfinance
 pydantic
