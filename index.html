@@ -87,7 +87,9 @@
     <!-- Feature 2: Check Stock Price -->
     <div class="card">
         <h3>📊 Check Live Stock Price</h3>
-        <input type="text" id="ticker" placeholder="Ticker (e.g. RELIANCE.NS)">
+        <!-- Naya API Key input box joda gaya hai -->
+        <input type="text" id="apiKeyInput" placeholder="Apni API Key yahan paste karein">
+        <input type="text" id="ticker" placeholder="Ticker (e.g. TCS.NS)">
         <button onclick="getStockPrice()">Price Dekhein</button>
         <div id="stockResult" class="result" style="display:none;"></div>
     </div>
@@ -114,14 +116,23 @@
             });
             const data = await response.json();
             resultDiv.innerHTML = `User: ${data.user}<br>Key: ${data.api_key}`;
+            
+            // Automatic jo key generate hogi wo stock wale box mein daalne ke liye option
+            document.getElementById("apiKeyInput").value = data.api_key;
         } catch (error) {
             resultDiv.innerHTML = "Error aa gaya: " + error;
         }
     }
 
     async function getStockPrice() {
+        const apiKey = document.getElementById("apiKeyInput").value.trim();
         const ticker = document.getElementById("ticker").value.trim();
         const resultDiv = document.getElementById("stockResult");
+
+        if (!apiKey) {
+            alert("Pehle API key daalo ya generate karo!");
+            return;
+        }
 
         if (!ticker) {
             alert("Ticker daalna mat bhoolo (e.g. TCS.NS)!");
@@ -132,7 +143,15 @@
         resultDiv.innerHTML = "Fetching live price...";
 
         try {
-            const response = await fetch(`${API_BASE_URL}/stock/${ticker}`);
+            // Yahan headers ke sath API key bheji ja rahi hai
+            const response = await fetch(`${API_BASE_URL}/stock/${ticker}`, {
+                method: "GET",
+                headers: {
+                    "x-api-key": apiKey,
+                    "accept": "application/json"
+                }
+            });
+            
             const data = await response.json();
             
             if(response.ok) {
