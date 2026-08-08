@@ -1,9 +1,9 @@
+import secrets
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-# Agar aapne database tables auto-create karne hain, toh unhe direct import karenge:
-# (Agar abhi database file ready nahi hai, toh ye lifespan hata bhi sakte hain)
+# Startup & Shutdown Lifespan Handler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic
@@ -34,4 +34,13 @@ def root():
         "message": "Welcome to Stock Market API. Visit /docs for documentation."
     }
 
-# Yahan aap apne baaki ke API routes/endpoints seedha likh sakte hain
+# 🔑 Yeh naya API Key generate karne ka option hai
+@app.post("/generate-key")
+def generate_api_key(username: str):
+    # Ek secure random API key generate karna
+    api_key = f"stock_key_{secrets.token_hex(12)}"
+    return {
+        "user": username,
+        "api_key": api_key,
+        "status": "Success! Aapki API key ban gayi hai."
+    }
