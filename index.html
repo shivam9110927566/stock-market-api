@@ -87,7 +87,6 @@
     <!-- Feature 2: Check Stock Price -->
     <div class="card">
         <h3>📊 Check Live Stock Price</h3>
-        <!-- Naya API Key input box joda gaya hai -->
         <input type="text" id="apiKeyInput" placeholder="Apni API Key yahan paste karein">
         <input type="text" id="ticker" placeholder="Ticker (e.g. TCS.NS)">
         <button onclick="getStockPrice()">Price Dekhein</button>
@@ -117,10 +116,10 @@
             const data = await response.json();
             resultDiv.innerHTML = `User: ${data.user}<br>Key: ${data.api_key}`;
             
-            // Automatic jo key generate hogi wo stock wale box mein daalne ke liye option
+            // Automatic key copy ho jayegi price wale input mein
             document.getElementById("apiKeyInput").value = data.api_key;
         } catch (error) {
-            resultDiv.innerHTML = "Error aa gaya: " + error;
+            resultDiv.innerHTML = "Error aa gaya: " + error.message;
         }
     }
 
@@ -143,7 +142,6 @@
         resultDiv.innerHTML = "Fetching live price...";
 
         try {
-            // Yahan headers ke sath API key bheji ja rahi hai
             const response = await fetch(`${API_BASE_URL}/stock/${ticker}`, {
                 method: "GET",
                 headers: {
@@ -154,13 +152,18 @@
             
             const data = await response.json();
             
-            if(response.ok) {
+            if (response.ok) {
                 resultDiv.innerHTML = `Stock: ${data.ticker}<br>Price: ₹${data.current_price} (${data.currency})<br>Market: ${data.market}`;
             } else {
-                resultDiv.innerHTML = "Error: " + (data.detail || "Data nahi mila");
+                // FIXED: [object Object] problem solve karne ke liye proper check
+                let errorMsg = "Data nahi mila";
+                if (data.detail) {
+                    errorMsg = typeof data.detail === 'object' ? JSON.stringify(data.detail) : data.detail;
+                }
+                resultDiv.innerHTML = `<span style="color: #ef4444;">Error: ${errorMsg}</span>`;
             }
         } catch (error) {
-            resultDiv.innerHTML = "Connection Error: " + error;
+            resultDiv.innerHTML = `<span style="color: #ef4444;">Connection Error: ${error.message}</span>`;
         }
     }
 </script>
